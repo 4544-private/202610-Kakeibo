@@ -1,15 +1,16 @@
 <script setup>
-import { reactive, watch, ref } from 'vue'
-import { CATEGORIES } from '../lib/categories.js'
+import { reactive, watch, ref, computed } from 'vue'
+import { colorVar } from '../lib/categories.js'
 
 const props = defineProps({
   // 編集対象。null なら新規入力モード
   editing: { type: Object, default: null },
   defaultDate: { type: String, required: true },
+  categories: { type: Array, required: true },
 })
 const emit = defineEmits(['submit', 'cancel'])
 
-const form = reactive({ date: props.defaultDate, category: CATEGORIES[0].id, amount: '', memo: '' })
+const form = reactive({ date: props.defaultDate, category: props.categories[0]?.id ?? '', amount: '', memo: '' })
 const amountInput = ref(null)
 
 watch(
@@ -19,6 +20,15 @@ watch(
   },
   { immediate: true },
 )
+
+// 選択中のカテゴリが削除されたら先頭に戻す
+watch(
+  () => props.categories.map((c) => c.id),
+  (ids) => {
+    if (!ids.includes(form.category)) form.category = ids[0] ?? ''
+  },
+)
+const selectedHint = computed(() => props.categories.find((c) => c.id === form.category)?.hint ?? '')
 
 function onSubmit() {
   if (form.amount === '' || Number(form.amount) <= 0) return
@@ -44,17 +54,18 @@ function onSubmit() {
       <fieldset>
         <legend class="label-text mb-1">カテゴリ</legend>
         <div class="flex flex-wrap gap-2">
-          <label v-for="c in CATEGORIES" :key="c.id" class="cursor-pointer" :title="c.hint">
+          <label v-for="c in categories" :key="c.id" class="cursor-pointer" :title="c.hint">
             <input v-model="form.category" type="radio" name="category" :value="c.id" class="hidden peer" />
             <span
               class="badge badge-lg badge-outline peer-checked:text-white peer-checked:border-transparent"
-              :style="form.category === c.id ? { backgroundColor: `var(--cat-${c.id})` } : {}"
+              :style="form.category === c.id ? { backgroundColor: colorVar(c.color) } : {}"
             >
-              <span class="inline-block w-2.5 h-2.5 rounded-full mr-1" :style="{ backgroundColor: `var(--cat-${c.id})` }"></span>
+              <span class="inline-block w-2.5 h-2.5 rounded-full mr-1" :style="{ backgroundColor: colorVar(c.color) }"></span>
               {{ c.label }}
             </span>
           </label>
         </div>
+        <p v-if="selectedHint" class="text-sm text-base-content/60 mt-1">{{ selectedHint }}</p>
       </fieldset>
 
       <label class="form-control">

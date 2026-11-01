@@ -24,6 +24,13 @@ describe('sumByCategory', () => {
     expect(r[0].share).toBeCloseTo(0.5)
     expect(r[2].amount).toBe(0)
   })
+  it('渡したカテゴリの並び順に従い、定義の無いカテゴリは「(不明)」にまとめる', () => {
+    const cats = [{ id: 'eatout', label: '外食', color: 2 }, { id: 'super', label: 'スーパー', color: 1 }]
+    const r = sumByCategory([...data, { id: '5', date: '2026-10-21', category: 'gone', amount: 1000 }], cats)
+    expect(r.map((x) => x.id)).toEqual(['eatout', 'super', '__unknown'])
+    expect(r[2].amount).toBe(1300)
+    expect(r.reduce((a, x) => a + x.share, 0)).toBeCloseTo(1)
+  })
   it('データなしでは割合0', () => {
     expect(sumByCategory([]).every((x) => x.share === 0)).toBe(true)
   })

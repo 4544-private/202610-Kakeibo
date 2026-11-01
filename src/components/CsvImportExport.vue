@@ -3,7 +3,7 @@ import { ref } from 'vue'
 import { toCsv, fromCsv } from '../lib/csv.js'
 import { saveFile } from '../lib/download.js'
 
-const props = defineProps({ expenses: { type: Array, required: true } })
+const props = defineProps({ expenses: { type: Array, required: true }, categories: { type: Array, required: true } })
 const emit = defineEmits(['import'])
 
 const fileInput = ref(null)
@@ -11,7 +11,7 @@ const mode = ref('append') // 'append' | 'replace'
 const result = ref(null)
 
 function exportCsv() {
-  const blob = new Blob([toCsv(props.expenses)], { type: 'text/csv' })
+  const blob = new Blob([toCsv(props.expenses, props.categories)], { type: 'text/csv' })
   const d = new Date()
   const filename = `kakeibo-${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}.csv`
   saveFile(blob, filename)
@@ -21,15 +21,15 @@ async function onFile(ev) {
   const file = ev.target.files?.[0]
   if (!file) return
   const text = await file.text()
-  const { expenses, errors } = fromCsv(text)
+  const { expenses, newCategories, errors } = fromCsv(text, props.categories)
   if (mode.value === 'replace' && expenses.length > 0) {
     if (!confirm(`現在の ${props.expenses.length} 件を削除して ${expenses.length} 件に置き換えます。よろしいですか？`)) {
       ev.target.value = ''
       return
     }
   }
-  if (expenses.length > 0) emit('import', { expenses, mode: mode.value })
-  result.value = { count: expenses.length, errors }
+  if (expenses.length > 0) emit('import', { expenses, newCategories, mode: mode.value })
+  result.value = { count: expenses.length, newLabels: expenses.length > 0 ? newCategories.map((c) => c.label) : [], errors }
   ev.target.value = ''
 }
 </script>
@@ -52,6 +52,7 @@ async function onFile(ev) {
       <div v-if="result" class="alert" :class="result.errors.length ? 'alert-warning' : 'alert-success'">
         <div>
           <div>{{ result.count }} 件を読み込みました。</div>
+          <div v-if="result.newLabels.length" class="text-sm">新しいカテゴリを追加しました: {{ result.newLabels.join('、') }}</div>
           <ul v-if="result.errors.length" class="text-sm list-disc ml-4">
             <li v-for="e in result.errors.slice(0, 10)" :key="e.line">{{ e.line }} 行目: {{ e.message }}</li>
             <li v-if="result.errors.length > 10">…ほか {{ result.errors.length - 10 }} 件</li>

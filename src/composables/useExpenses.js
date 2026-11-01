@@ -23,5 +23,9 @@ export function useExpenses() {
   function replaceAll(list) {
     expenses.value = [...list]
   }
-  return { expenses, add, update, remove, append, replaceAll }
+  // カテゴリ削除時に、そのカテゴリの明細を別のカテゴリへ付け替える
+  function reassignCategory(fromId, toId) {
+    expenses.value = expenses.value.map((e) => (e.category === fromId ? { ...e, category: toId } : e))
+  }
+  return { expenses, add, update, remove, append, replaceAll, reassignCategory }
 }

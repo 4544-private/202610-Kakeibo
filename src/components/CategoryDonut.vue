@@ -1,6 +1,7 @@
 <script setup>
 import { computed, ref } from 'vue'
 import { formatYen } from '../lib/summary.js'
+import { colorVar } from '../lib/categories.js'
 
 // rows: sumByCategory() の戻り値
 const props = defineProps({ rows: { type: Array, required: true } })
@@ -56,7 +57,7 @@ const center = computed(() => {
             v-for="a in arcs"
             :key="a.id"
             :d="a.d"
-            :fill="`var(--cat-${a.id})`"
+            :fill="colorVar(a.color)"
             fill-rule="evenodd"
             stroke-width="2"
             class="stroke-base-100 transition-opacity cursor-pointer"
@@ -82,7 +83,7 @@ const center = computed(() => {
               @mouseenter="hovered = x.id"
               @mouseleave="hovered = null"
             >
-              <td><span class="inline-block w-3 h-3 rounded-sm" :style="{ backgroundColor: `var(--cat-${x.id})` }"></span></td>
+              <td><span class="inline-block w-3 h-3 rounded-sm" :style="{ backgroundColor: colorVar(x.color) }"></span></td>
               <td class="whitespace-nowrap">{{ x.label }}</td>
               <td class="text-right whitespace-nowrap tabular-nums">{{ formatYen(x.amount) }}</td>
               <td class="text-right whitespace-nowrap tabular-nums text-base-content/60">{{ Math.round(x.share * 100) }}%</td>

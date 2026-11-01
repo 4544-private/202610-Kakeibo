@@ -1,4 +1,4 @@
-import { CATEGORY_BY_LABEL, categoryLabel } from './categories.js'
+import { DEFAULT_CATEGORIES, LABEL_MAX, createCategory, findCategory } from './categories.js'
 import { newId } from './id.js'
 
 export const CSV_HEADER = ['日付', 'カテゴリ', '金額', 'メモ']
@@ -9,10 +9,10 @@ function escapeCell(value) {
 }
 
 // Excel で開けるよう UTF-8 BOM + CRLF
-export function toCsv(expenses) {
+export function toCsv(expenses, categories = DEFAULT_CATEGORIES) {
   const lines = [CSV_HEADER.join(',')]
   for (const e of expenses) {
-    lines.push([e.date, categoryLabel(e.category), e.amount, e.memo ?? ''].map(escapeCell).join(','))
+    lines.push([e.date, findCategory(categories, e.category).label, e.amount, e.memo ?? ''].map(escapeCell).join(','))
   }
   return '﻿' + lines.join('\r\n') + '\r\n'
 }
@@ -59,18 +59,20 @@ export function parseCsvRows(text) {
   return rows.filter((r) => !(r.length === 1 && r[0] === ''))
 }
 
-// 戻り値: { expenses, errors: [{ line, message }] }
-export function fromCsv(text) {
+// 戻り値: { expenses, newCategories, errors: [{ line, message }] }
+// categories に無いカテゴリ名は、新しいカテゴリとして newCategories に作る（取り込む側で追加する）
+export function fromCsv(text, categories = DEFAULT_CATEGORIES) {
   const rows = parseCsvRows(text)
   const expenses = []
+  const newCategories = []
   const errors = []
-  if (rows.length === 0) return { expenses, errors: [{ line: 0, message: 'データがありません' }] }
+  if (rows.length === 0) return { expenses, newCategories, errors: [{ line: 0, message: 'データがありません' }] }
 
   const header = rows[0].map((h) => h.trim())
   const col = (name) => header.indexOf(name)
   const idx = { date: col('日付'), category: col('カテゴリ'), amount: col('金額'), memo: col('メモ') }
   if (idx.date < 0 || idx.category < 0 || idx.amount < 0) {
-    return { expenses, errors: [{ line: 1, message: `見出し行が不正です（期待: ${CSV_HEADER.join(',')}）` }] }
+    return { expenses, newCategories, errors: [{ line: 1, message: `見出し行が不正です（期待: ${CSV_HEADER.join(',')}）` }] }
   }
 
   rows.slice(1).forEach((r, i) => {
@@ -84,9 +86,12 @@ export function fromCsv(text) {
       errors.push({ line, message: `日付の形式が不正です: ${date}` })
       return
     }
-    const category = CATEGORY_BY_LABEL[label]
-    if (!category) {
-      errors.push({ line, message: `不明なカテゴリです: ${label}` })
+    if (!label) {
+      errors.push({ line, message: 'カテゴリが空です' })
+      return
+    }
+    if (label.length > LABEL_MAX) {
+      errors.push({ line, message: `カテゴリ名が ${LABEL_MAX} 文字を超えています: ${label}` })
       return
     }
     const amount = Number(amountStr)
@@ -94,7 +99,12 @@ export function fromCsv(text) {
       errors.push({ line, message: `金額が数値ではありません: ${amountStr}` })
       return
     }
+    let category = categories.find((c) => c.label === label) ?? newCategories.find((c) => c.label === label)
+    if (!category) {
+      category = createCategory({ label }, [...categories, ...newCategories])
+      newCategories.push(category)
+    }
     expenses.push({ id: newId(), date, category: category.id, amount, memo })
   })
-  return { expenses, errors }
+  return { expenses, newCategories, errors }
 }
