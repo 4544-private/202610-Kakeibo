@@ -3,27 +3,39 @@
   themes: light --default, dark --prefersdark;
 }
 
-/* カテゴリ色（dataviz 検証済みパレット）。順序は categories.js と一致 */
+/* カテゴリ色の枠（dataviz 検証済みパレットの 8 色 + グレー）。番号は categories.js の PALETTE の slot */
 :root {
-  --cat-super: #2a78d6;
-  --cat-eatout: #eb6834;
-  --cat-cafe_weekday: #1baf7a;
-  --cat-cafe_holiday: #eda100;
-  --cat-snack: #e87ba4;
+  --cat-c0: #8a8983;
+  --cat-c1: #2a78d6;
+  --cat-c2: #eb6834;
+  --cat-c3: #1baf7a;
+  --cat-c4: #eda100;
+  --cat-c5: #e87ba4;
+  --cat-c6: #008300;
+  --cat-c7: #6250d6;
+  --cat-c8: #e34948;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --cat-super: #3987e5;
-    --cat-eatout: #d95926;
-    --cat-cafe_weekday: #199e70;
-    --cat-cafe_holiday: #c98500;
-    --cat-snack: #d55181;
+    --cat-c0: #8a8983;
+    --cat-c1: #3987e5;
+    --cat-c2: #d95926;
+    --cat-c3: #199e70;
+    --cat-c4: #c98500;
+    --cat-c5: #d55181;
+    --cat-c6: #008300;
+    --cat-c7: #9085e9;
+    --cat-c8: #e66767;
   }
 }
 :root[data-theme="dark"] {
-  --cat-super: #3987e5;
-  --cat-eatout: #d95926;
-  --cat-cafe_weekday: #199e70;
-  --cat-cafe_holiday: #c98500;
-  --cat-snack: #d55181;
+  --cat-c0: #8a8983;
+  --cat-c1: #3987e5;
+  --cat-c2: #d95926;
+  --cat-c3: #199e70;
+  --cat-c4: #c98500;
+  --cat-c5: #d55181;
+  --cat-c6: #008300;
+  --cat-c7: #9085e9;
+  --cat-c8: #e66767;
 }

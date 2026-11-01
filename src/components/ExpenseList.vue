@@ -1,8 +1,11 @@
 <script setup>
-import { categoryLabel } from '../lib/categories.js'
+import { computed } from 'vue'
+import { categoryMap, colorVar, UNKNOWN_CATEGORY } from '../lib/categories.js'
 import { formatYen } from '../lib/summary.js'
 
-defineProps({ expenses: { type: Array, required: true } })
+const props = defineProps({ expenses: { type: Array, required: true }, categories: { type: Array, required: true } })
+const byId = computed(() => categoryMap(props.categories))
+const cat = (id) => byId.value[id] ?? UNKNOWN_CATEGORY
 const emit = defineEmits(['edit', 'remove'])
 
 const day = (d) => `${Number(d.slice(5, 7))}/${Number(d.slice(8, 10))}`
@@ -22,7 +25,7 @@ const day = (d) => `${Number(d.slice(5, 7))}/${Number(d.slice(8, 10))}`
             <tr v-for="e in expenses" :key="e.id">
               <td class="whitespace-nowrap">{{ day(e.date) }}</td>
               <td class="whitespace-nowrap">
-                <span class="inline-block w-2.5 h-2.5 rounded-full mr-1 align-middle" :style="{ backgroundColor: `var(--cat-${e.category})` }"></span>{{ categoryLabel(e.category) }}
+                <span class="inline-block w-2.5 h-2.5 rounded-full mr-1 align-middle" :style="{ backgroundColor: colorVar(cat(e.category).color) }"></span>{{ cat(e.category).label }}
               </td>
               <td class="text-right whitespace-nowrap tabular-nums">{{ formatYen(e.amount) }}</td>
               <td class="max-w-48 truncate">{{ e.memo }}</td>
