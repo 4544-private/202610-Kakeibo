@@ -1,6 +1,7 @@
 <script setup>
 import { ref } from 'vue'
 import { toCsv, fromCsv } from '../lib/csv.js'
+import { saveFile } from '../lib/download.js'
 
 const props = defineProps({ expenses: { type: Array, required: true } })
 const emit = defineEmits(['import'])
@@ -10,14 +11,10 @@ const mode = ref('append') // 'append' | 'replace'
 const result = ref(null)
 
 function exportCsv() {
-  const blob = new Blob([toCsv(props.expenses)], { type: 'text/csv;charset=utf-8' })
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
+  const blob = new Blob([toCsv(props.expenses)], { type: 'text/csv' })
   const d = new Date()
-  a.href = url
-  a.download = `kakeibo-${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}.csv`
-  a.click()
-  URL.revokeObjectURL(url)
+  const filename = `kakeibo-${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}.csv`
+  saveFile(blob, filename)
 }
 
 async function onFile(ev) {
